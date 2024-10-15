@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "speachtotext-it-vosk"
+version = "0.1.0"
+description = ""
+authors = ["BeeNick <nicola.fiini92@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+vosk = "^0.3.45"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
