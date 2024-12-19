@@ -6,8 +6,9 @@ authors = ["BeeNick <nicola.fiini92@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 vosk = "^0.3.45"
+flask = "^3.1.0"
 
 
 [build-system]
