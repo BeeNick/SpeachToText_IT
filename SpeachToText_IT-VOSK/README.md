@@ -12,10 +12,14 @@ In this moment there are 2 available vosk models for italian language:
 I'll use poetry for python package management therefore you'll find the .toml file with all the info. 
 
 
-I'll use pyAudio for audio management, pyAudio v19 is released under MIT Licencse - (checked 27/11/2024).
-https://people.csail.mit.edu/hubert/pyaudio/
-
-
 I'll use Flask 3.1.0 as web application framework.
 BSD License - (checked 2/12/2024).
 https://pypi.org/project/Flask/
+
+
+I'll use pyOpenSSL 24.3.0 to set https connection. pyOpenSSL 24.3.0 is released under Apache-2.0 license - (checked 19/12/2024).
+https://pypi.org/project/pyOpenSSL/
+
+
+I'll use beans-logging for logging purpouses. beans-logging 6.0.0 is released under MIT license - (checked 19/12/2024).
+https://pypi.org/project/beans-logging/

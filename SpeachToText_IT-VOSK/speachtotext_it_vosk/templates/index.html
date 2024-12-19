@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Italian Speech-to-Text - powered by Vosk model</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        #transcript {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            min-height: 200px;
+            white-space: pre-wrap;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        #startBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #startBtn:hover {
+            background-color: #45a049;
+        }
+        #stopBtn {
+            background-color: #f44336;
+            color: white;
+        }
+        #stopBtn:hover {
+            background-color: #da190b;
+        }
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            text-align: center;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Italian Speech-to-Text</h1>
+    <h2>Powered by Vosk model</h2>
+    <button id="startBtn" class="button">Start Recording</button>
+    <button id="stopBtn" class="button" disabled>Stop Recording</button>
+    <div id="status" class="status">Ready</div>
+    <div id="transcript"></div>
+
+    <script>
+        // Debug information about browser capabilities
+        function checkBrowserCapabilities() {
+            console.log('Browser Information:', {
+                userAgent: navigator.userAgent,
+                hasMediaDevices: !!navigator.mediaDevices,
+                hasGetUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+                hasMediaRecorder: !!window.MediaRecorder,
+                audioContext: !!(window.AudioContext || window.webkitAudioContext)
+            });
+        }
+    
+        // Run check immediately
+        checkBrowserCapabilities();
+    
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const transcript = document.getElementById('transcript');
+        let transcriptText = '';
+    
+        // Initialize AudioContext
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioContext;
+    
+        async function checkMicrophoneAccess() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+                throw new Error('This browser does not support media devices API');
+            }
+    
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const hasAudioInput = devices.some(device => device.kind === 'audioinput');
+            
+            if (!hasAudioInput) {
+                throw new Error('No microphone found');
+            }
+        }
+    
+        async function initializeAudio() {
+            try {
+                // First, check if we have access to a microphone
+                await checkMicrophoneAccess();
+    
+                // Create AudioContext
+                audioContext = new AudioContext();
+                status.textContent = 'Audio system initialized';
+                startBtn.disabled = false;
+            } catch (err) {
+                console.error('Audio initialization error:', err);
+                status.textContent = `Error: ${err.message}`;
+                status.style.backgroundColor = '#ffebee';
+                startBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
+        }
+    
+        async function startRecording() {
+            try {
+                if (!audioContext) {
+                    await initializeAudio();
+                }
+    
+                status.textContent = 'Requesting microphone access...';
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    }
+                });
+    
+                // Create MediaRecorder if supported
+                if (window.MediaRecorder) {
+                    mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: 'audio/webm;codecs=opus'
+                    });
+    
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+    
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+                        await sendAudioToServer(audioBlob);
+                        audioChunks = [];
+                    };
+    
+                    mediaRecorder.start(2000);
+                    isRecording = true;
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    status.textContent = 'Recording...';
+                    status.style.backgroundColor = '#e8f5e9';
+                } else {
+                    throw new Error('MediaRecorder is not supported in this browser');
+                }
+            } catch (err) {
+                console.error('Error starting recording:', err);
+                status.textContent = `Error: ${err.message}`;
+                status.style.backgroundColor = '#ffebee';
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            }
+        }
+    
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                status.textContent = 'Stopped';
+                status.style.backgroundColor = '#e9ecef';
+            }
+        }
+    
+        async function sendAudioToServer(audioBlob) {
+            try {
+                status.textContent = 'Sending audio to server...';
+                const formData = new FormData();
+                formData.append('audio', audioBlob);
+    
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+    
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }
+    
+                const data = await response.json();
+                if (data.text) {
+                    transcriptText += data.text + '\n';
+                    transcript.textContent = transcriptText;
+                    transcript.scrollTop = transcript.scrollHeight;
+                }
+                status.textContent = isRecording ? 'Recording...' : 'Ready';
+            } catch (err) {
+                console.error('Error sending audio to server:', err);
+                status.textContent = `Error: ${err.message}`;
+                status.style.backgroundColor = '#ffebee';
+            }
+        }
+    
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                await initializeAudio();
+            } catch (err) {
+                console.error('Initialization error:', err);
+                status.textContent = 'Error: Could not initialize audio system';
+                status.style.backgroundColor = '#ffebee';
+                startBtn.disabled = true;
+                stopBtn.disabled = true;
+            }
+        });
+    
+        // Add event listeners
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+    </script>
+</body>
+</html>

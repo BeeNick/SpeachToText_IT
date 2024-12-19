@@ -9,6 +9,8 @@ readme = "README.md"
 python = "^3.9"
 vosk = "^0.3.45"
 flask = "^3.1.0"
+pyopenssl = "^24.3.0"
+beans-logging = "^6.0.0"
 
 
 [build-system]

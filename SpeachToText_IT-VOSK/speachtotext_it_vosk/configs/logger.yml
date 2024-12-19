@@ -1,0 +1,12 @@
+logger:
+  app_name: "speachToTextITVoskApp"
+  level: "TRACE"
+  file:
+    logs_dir: "./logs"
+    rotate_size: 10000000 # 10MB
+    rotate_time: "00:00:00"
+    backup_count: 90
+    log_handlers:
+      enabled: true
+    json_handlers:
+      enabled: true

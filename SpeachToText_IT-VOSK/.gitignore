@@ -1,0 +1,4 @@
+**/logs
+**/vosk-model-small-it-0.22
+cert.pem
+key.pem
