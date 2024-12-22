@@ -1,0 +1,2 @@
+output_transcribed_file_path: "text/recognized_text.txt"
+output_audio_path: "/audio.webm"

@@ -23,3 +23,7 @@ https://pypi.org/project/pyOpenSSL/
 
 I'll use beans-logging for logging purpouses. beans-logging 6.0.0 is released under MIT license - (checked 19/12/2024).
 https://pypi.org/project/beans-logging/
+
+
+I'll use MediaRecorder js interface for MDM MediaStream Recording API for audio data recoarding.
+https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder 
